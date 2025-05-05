@@ -1,18 +1,40 @@
 # importing the library
 import pygame
+import random
 
 class DrawRect:
     def __init__(self, surface, color, xPos, yPos, width, height):
-        self.surface = surface
-        self.color = color
-        self.xPos = xPos
-        self.yPos = yPos
-        self.width = width
-        self.height = height
+        self.__surface = surface
+        self.__color = color
+        self.__xPos = xPos
+        self.__yPos = yPos
+        self.__width = width
+        self.__height = height
+        # __ means that the attribute is protected and cannot be directly accessed by another object
 
     def DrawShape(self):
-        pygame.draw.rect(self.surface, self.color, [self.xPos, self.yPos, self.width, self.height], 0)
+        pygame.draw.rect(self.__surface, self.__color, [self.__xPos, self.__yPos, self.__width, self.__height], 0)
         # pygame.display.update()
+    
+    def ReadXPos(self):
+        # read the value of an attribute
+        return self.__xPos
+    
+    def SetXPos(self, moveValue):
+        # set/change the value of an attribute
+        self.__xPos += moveValue
+
+
+def DrawShapes(shapeList):
+    for shape in shapeList:
+        shape.DrawShape()
+
+def MoveShapes(shapeList, moveValue):
+    for shape in shapeList:
+        shape.SetXPos(moveValue)
+        # shape.__yPos += moveValue
+        
+
 
 # initializing all the importe
 # pygame modules
@@ -42,8 +64,20 @@ pygame.display.flip()  # render the bgcolor
 title = 'Intro to pygame'
 pygame.display.set_caption(title) 
 
-rect1 = DrawRect(surface, (0, 0, 255), 100, 100, 400, 100)
-rect2 = DrawRect(surface, (0, 255, 0), screenWidth, screenHeight, 200, 50)
+# instantiate objects from the DrawRect class
+# rect1 = DrawRect(surface, (0, 0, 255), 100, 100, 400, 100)
+# rect2 = DrawRect(surface, (0, 255, 0), screenWidth, screenHeight, 200, 50)
+rectList = []  # store out rect objects
+for i in range(5):
+    col = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
+    sizeX = random.randint(1,250)
+    sizeY = random.randint(1,250)
+    posX = random.randint(0, screenWidth - sizeX)
+    posY = random.randint(0, screenHeight - sizeY)
+    rectList.append(DrawRect(surface, col, posX, posY, sizeX, sizeY))
+    # print(rectList[i].ReadXPos())
+    
+
 # creating a bool value which checks allows the game to run
 running = True
   
@@ -64,8 +98,11 @@ while running:
     # pygame to draw the outlined rectangle
     # (what we draw on, color of shape, size and position of shape, width of outline)
     # pygame.draw.rect(surface, (0, 0, 255), [100, 100, 400, 100], 0)
-    rect1.DrawShape()
-    rect2.DrawShape()  
+    # rect1.DrawShape()
+    # rect2.DrawShape()
+    MoveShapes(rectList, 1)
+    DrawShapes(rectList)
+      
     
     #pygame.display.flip()  # render the bgcolor
     pygame.display.update()  # update the display
