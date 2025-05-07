@@ -24,7 +24,7 @@ class Shape:  # Parent Class
 
     def SetXPos(self, moveValue):
         # set/change the value of an attribute
-        self.__xPos += moveValue
+        self.__xPos = moveValue
 
 class DrawRect(Shape):  # inheriting from parent class
     def __init__(self, surface, color, xPos, yPos, width, height):
@@ -36,6 +36,12 @@ class DrawRect(Shape):  # inheriting from parent class
     def DrawShape(self):
         pygame.draw.rect(self.ReadSurface(), self.ReadColor(), [self.ReadXPos(), self.ReadYPos(), self.__width, self.__height], 0)
         # pygame.display.update()
+
+    def SetXPos(self, moveValue):  # overriding the parent class
+        # setting a new position by reading the current X position and subtracting a inputted value
+        newPos = self.ReadXPos() - moveValue
+        # running the parent version of this method and sending a new position for it to go to  
+        super().SetXPos(newPos)   
 
 class DrawCirle(Shape):  # inheriting from parent class
     def __init__(self, surface, color, xPos, yPos, radius):
@@ -128,9 +134,10 @@ while running:
     # pygame.draw.rect(surface, (0, 0, 255), [100, 100, 400, 100], 0)
     # rect1.DrawShape()
     # rect2.DrawShape()
-    # MoveShapes(rectList, 1)
+    
     DrawShapes(shapeList)
     # DrawShapes(circleList)
+    MoveShapes(shapeList, 1)
       
     
     #pygame.display.flip()  # render the bgcolor
