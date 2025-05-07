@@ -31,7 +31,18 @@ class DrawRect(Shape):  # inheriting from parent class
         super().__init__(surface, color, xPos, yPos)
         self.__width = width
         self.__height = height
+        self.__movingLeft = self.SetDirection()
         # __ means that the attribute is protected and cannot be directly accessed by another object
+
+    def SetDirection(self):
+        x = random.randint(0,1)
+        if x == 0:
+            return True
+        else:
+            return False
+    
+    def ReadDir(self):
+        return self.__movingLeft
 
     def DrawShape(self):
         pygame.draw.rect(self.ReadSurface(), self.ReadColor(), [self.ReadXPos(), self.ReadYPos(), self.__width, self.__height], 0)
@@ -39,9 +50,20 @@ class DrawRect(Shape):  # inheriting from parent class
 
     def SetXPos(self, moveValue):  # overriding the parent class
         # setting a new position by reading the current X position and subtracting a inputted value
-        newPos = self.ReadXPos() - moveValue
+        newPos = self.ReadXPos()
+        if self.__movingLeft:  # if true
+            if self.ReadXPos() <= 0:  # shape is on or below the left boundary
+                self.__movingLeft = False  # change direction
+            else:
+                newPos = self.ReadXPos() - moveValue  # keep moving left
+        else:
+            if self.ReadXPos() + self.__width >= screenWidth:  # shape is on or above right boundary
+                self.__movingLeft = True  # changing direction
+            else:
+                newPos = self.ReadXPos() + moveValue  # keep moving right
+        
         # running the parent version of this method and sending a new position for it to go to  
-        super().SetXPos(newPos)   
+        super().SetXPos(newPos)  # actually move the shape  
 
 class DrawCirle(Shape):  # inheriting from parent class
     def __init__(self, surface, color, xPos, yPos, radius):
@@ -51,6 +73,8 @@ class DrawCirle(Shape):  # inheriting from parent class
     
     def DrawShape(self):
         pygame.draw.circle(self.ReadSurface(), self.ReadColor(), [self.ReadXPos(), self.ReadYPos()], self.__radius, 0)
+
+    # HOMEWORK make circle bounce left and right like the rectangle does
 
 
 def DrawShapes(shapeList):
@@ -134,7 +158,7 @@ while running:
     # pygame.draw.rect(surface, (0, 0, 255), [100, 100, 400, 100], 0)
     # rect1.DrawShape()
     # rect2.DrawShape()
-    
+
     DrawShapes(shapeList)
     # DrawShapes(circleList)
     MoveShapes(shapeList, 1)
