@@ -1,5 +1,38 @@
 import pygame
 
+#region player
+class Player():
+    def __init__(self, surface, sprite, xPos, yPos):
+        self.__surface = surface
+        self.__sprite = sprite
+        self.__xPos = xPos
+        self.__yPos = yPos
+        self.__speed = 5
+
+    def Movement(self, keysPressed):
+        if keysPressed[pygame.K_w] or keysPressed[pygame.K_UP]:
+            self.__yPos -= self.__speed
+        elif keysPressed[pygame.K_s] or keysPressed[pygame.K_DOWN]:
+            self.__yPos += self.__speed
+        if keysPressed[pygame.K_a] or keysPressed[pygame.K_LEFT]:
+            self.__xPos -= self.__speed
+        elif keysPressed[pygame.K_d] or keysPressed[pygame.K_RIGHT]:
+            self.__xPos += self.__speed
+    
+    def GetXPos(self):
+        return self.__xPos
+    
+    def GetYPos(self):
+        return self.__yPos
+    
+    def GetPos(self):
+        return (self.__xPos, self.__yPos)
+    
+    def DrawSprite(self):
+        self.__surface.blit(self.__sprite, (self.__xPos, self.__yPos),)
+
+#endregion player
+
 # initializing all the imported pygame modules
 (numpass,numfail) = pygame.init()
  
@@ -13,7 +46,7 @@ screenHeight = 720
 pygame.display.set_mode((screenWidth, screenHeight))
 
 # Initializing RGB Color
-bgColor = (0, 0, 0)
+bgColor = (0, 120, 120)
 
 # Creating a reference to the surface
 surface = pygame.display.get_surface()
@@ -29,12 +62,19 @@ cSpeed = 60  # limit the FPS
 #endregion
 
 # player shape
-player = pygame.Rect(150, 150, 50, 50)
+# player = pygame.Rect(150, 150, 50, 50)
+playerSprite = pygame.image.load("Intro\sprites\player.png").convert_alpha()
+playerSpriteLocation = "Intro\sprites\player.png"
+# surface.blit(playerSprite, (20,20),)  # needs to move to draw function
+
+player = Player(surface, playerSprite, screenWidth/2, screenHeight/2)
 
 def Draw():
     # Changing surface color
     surface.fill(bgColor)  # setting acolor for the background
-    pygame.draw.rect(surface, (255, 0, 0), player)
+    # pygame.draw.rect(surface, (255, 0, 0), player)
+    # surface.blit(playerSprite, (20,20),)
+    player.DrawSprite()
     
 # creating a bool value which checks allows the game to run
 running = True
@@ -63,15 +103,9 @@ while running:
         
         # store all keys pressed
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_w] or keys[pygame.K_UP]:
-            player.y -= 5
-        elif keys[pygame.K_s] or keys[pygame.K_DOWN]:
-            player.y += 5
-        if keys[pygame.K_a] or keys[pygame.K_LEFT]:
-            player.x -= 5
-        elif keys[pygame.K_d] or keys[pygame.K_RIGHT]:
-            player.x += 5
-
+        player.Movement(keys)
+        
+    # print(player.GetPos())
     Draw()
     pygame.display.update()  # update the display    
     clock.tick(cSpeed) # sets the FPS
