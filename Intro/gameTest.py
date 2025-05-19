@@ -88,22 +88,10 @@ while running:
         # if event is of type quit then set running bool to false 
         if event.type == pygame.QUIT: 
             running = False
-        
-        # Handle keyboard inputs for movement - event driven
-        """ 
-        if event.type == pygame.KEYDOWN:
-            if event.key in (pygame.K_UP, event.key == pygame.K_w):
-                player.y -= 5
-            elif event.key in (pygame.K_DOWN, event.key == pygame.K_s):
-                player.y += 5
-            if event.key in (pygame.K_LEFT, event.key == pygame.K_a):
-                player.x -= 5
-            elif event.key in (pygame.K_RIGHT, event.key == pygame.K_d):
-                player.x += 5 """
-        
-        # store all keys pressed
-        keys = pygame.key.get_pressed()
-        player.Movement(keys)
+               
+    # store all keys pressed
+    keys = pygame.key.get_pressed()
+    player.Movement(keys)
         
     # print(player.GetPos())
     Draw()
