@@ -5,19 +5,32 @@ class Player():
     def __init__(self, surface, sprite, xPos, yPos):
         self.__surface = surface
         self.__sprite = sprite
-        self.__xPos = xPos
-        self.__yPos = yPos
         self.__speed = 5
+        self.__height = sprite.get_height()  # height of sprite
+        self.__width = sprite.get_width()
+        self.__xPos = xPos/2 - self.__width/2  # set spawn to centre of screen
+        self.__yPos = yPos/2 - self.__height/2
 
-    def Movement(self, keysPressed):
+    def Movement(self, keysPressed, obstacles):
+        old_x = self.__xPos  # save a reference to the players current location
+        old_y = self.__yPos
+
+        # set desired position
         if keysPressed[pygame.K_w] or keysPressed[pygame.K_UP]:
             self.__yPos -= self.__speed
-        elif keysPressed[pygame.K_s] or keysPressed[pygame.K_DOWN]:
+        if keysPressed[pygame.K_s] or keysPressed[pygame.K_DOWN]:
             self.__yPos += self.__speed
         if keysPressed[pygame.K_a] or keysPressed[pygame.K_LEFT]:
             self.__xPos -= self.__speed
-        elif keysPressed[pygame.K_d] or keysPressed[pygame.K_RIGHT]:
+        if keysPressed[pygame.K_d] or keysPressed[pygame.K_RIGHT]:
             self.__xPos += self.__speed
+        
+        # if player desired position collides with object dont move it
+        player_rect = self.GetRect() # Check collisions
+        for obstacle in obstacles:
+            if player_rect.colliderect(obstacle):
+                self.__xPos = old_x
+                self.__yPos = old_y
     
     def GetXPos(self):
         return self.__xPos
@@ -31,6 +44,9 @@ class Player():
     def DrawSprite(self):
         self.__surface.blit(self.__sprite, (self.__xPos, self.__yPos),)
 
+    def GetRect(self):
+        return pygame.Rect(self.__xPos, self.__yPos, self.__width, self.__height)
+    
 #endregion player
 
 # initializing all the imported pygame modules
@@ -67,13 +83,20 @@ playerSprite = pygame.image.load("Intro\sprites\player.png").convert_alpha()
 playerSpriteLocation = "Intro\sprites\player.png"
 # surface.blit(playerSprite, (20,20),)  # needs to move to draw function
 
-player = Player(surface, playerSprite, screenWidth/2, screenHeight/2)
+player = Player(surface, playerSprite, screenWidth, screenHeight)  # instantiate player object
+
+obstacles = []  # obstacle list
+obstacles.append(pygame.Rect(100, 100, 50, 300))  # object for collision testing
+obstacles.append(pygame.Rect(200, 200 ,200, 50))
 
 def Draw():
     # Changing surface color
     surface.fill(bgColor)  # setting acolor for the background
     # pygame.draw.rect(surface, (255, 0, 0), player)
     # surface.blit(playerSprite, (20,20),)
+    for obstacle in obstacles:
+        pygame.draw.rect(surface, (255, 255, 0), obstacle)  # Draw the obstacle (yellow)
+
     player.DrawSprite()
     
 # creating a bool value which checks allows the game to run
@@ -91,7 +114,8 @@ while running:
                
     # store all keys pressed
     keys = pygame.key.get_pressed()
-    player.Movement(keys)
+    # call player movement to get new player position
+    player.Movement(keys, obstacles)
         
     # print(player.GetPos())
     Draw()
