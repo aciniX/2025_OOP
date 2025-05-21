@@ -1,29 +1,42 @@
 import pygame
+import math
 
 #region player
 class Player():
     def __init__(self, surface, sprite, xPos, yPos):
         self.__surface = surface
         self.__sprite = sprite
-        self.__speed = 5
+        self.__speed = 2
         self.__height = sprite.get_height()  # height of sprite
         self.__width = sprite.get_width()
         self.__xPos = xPos/2 - self.__width/2  # set spawn to centre of screen
         self.__yPos = yPos/2 - self.__height/2
+        self.__rotation_speed = 3  # degrees per frame
+        self.__angle = 90  # rotation angle in degrees
 
     def Movement(self, keysPressed, obstacles):
         old_x = self.__xPos  # save a reference to the players current location
         old_y = self.__yPos
 
-        # set desired position
-        if keysPressed[pygame.K_w] or keysPressed[pygame.K_UP]:
-            self.__yPos -= self.__speed
-        if keysPressed[pygame.K_s] or keysPressed[pygame.K_DOWN]:
-            self.__yPos += self.__speed
+        # set desired rotation
         if keysPressed[pygame.K_a] or keysPressed[pygame.K_LEFT]:
-            self.__xPos -= self.__speed
+            self.__angle += self.__rotation_speed
         if keysPressed[pygame.K_d] or keysPressed[pygame.K_RIGHT]:
-            self.__xPos += self.__speed
+            self.__angle -= self.__rotation_speed
+
+        # angle conversion from rad to deg for trigonometry
+        rad = math.radians(self.__angle)
+        dx = math.cos(rad) * self.__speed
+        dy = -math.sin(rad) * self.__speed  # negative because screen y increases downward
+
+        # if keysPressed[pygame.K_w] or keysPressed[pygame.K_UP]:
+        #     self.__yPos -= self.__speed
+        # if keysPressed[pygame.K_s] or keysPressed[pygame.K_DOWN]:
+        #     self.__yPos += self.__speed
+
+        # always move forward
+        self.__xPos += dx
+        self.__yPos += dy        
         
         # if player desired position collides with object dont move it
         player_rect = self.GetRect() # Check collisions
@@ -42,13 +55,52 @@ class Player():
         return (self.__xPos, self.__yPos)
     
     def DrawSprite(self):
-        self.__surface.blit(self.__sprite, (self.__xPos, self.__yPos),)
+        # Rotate the original image by the current angle
+        rotated_sprite = pygame.transform.rotate(self.__sprite, self.__angle - 90)
+        # Get the new rect and center it at the current position
+        rect = rotated_sprite.get_rect(center=(self.__xPos, self.__yPos))
+        # Draw the rotated image
+        self.__surface.blit(rotated_sprite, rect.topleft)
+        #self.__surface.blit(self.__sprite, (self.__xPos, self.__yPos),)
 
     def GetRect(self):
-        return pygame.Rect(self.__xPos, self.__yPos, self.__width, self.__height)
-    
+        return pygame.Rect(self.__xPos, self.__yPos, self.__width, self.__height)    
 #endregion player
 
+#region walls
+class Walls():
+    def __init__(self, surface, sprite, xPos, yPos, owner):
+        self.__surface = surface
+        self.__sprite = sprite
+        self.__height = sprite.get_height()  # height of sprite
+        self.__width = sprite.get_width()
+        self.__xPos = xPos/2 - self.__width/2  # set spawn to centre of screen
+        self.__yPos = yPos/2 - self.__height/2
+        self.__owner = owner
+        if owner == 1:
+            sprite.fill(255, 255, 0)
+        else:
+            sprite.fill(0, 255, 255)
+        
+        def DrawSprite(self):
+            self.__surface.blit(self.__sprite, (self.__xPos, self.__yPos),)
+
+        def GetRect(self):
+            return pygame.Rect(self.__xPos, self.__yPos, self.__width, self.__height)
+        
+        def DestroyObject(self, objectList):
+            objectList.remove(self)
+
+        def CheckWallCollision(self, objectList):
+            print('check')
+            thisRect = GetRect()
+            for object in objectList:
+                if thisRect.collideRect(object):
+                    return True
+            return False
+ 
+
+#endregion walls
 # initializing all the imported pygame modules
 (numpass,numfail) = pygame.init()
  
@@ -80,7 +132,7 @@ cSpeed = 60  # limit the FPS
 # player shape
 # player = pygame.Rect(150, 150, 50, 50)
 playerSprite = pygame.image.load("Intro\sprites\player.png").convert_alpha()
-playerSpriteLocation = "Intro\sprites\player.png"
+wallSprite = pygame.image.load("Intro\sprites\wall.png").convert_alpha()
 # surface.blit(playerSprite, (20,20),)  # needs to move to draw function
 
 player = Player(surface, playerSprite, screenWidth, screenHeight)  # instantiate player object
