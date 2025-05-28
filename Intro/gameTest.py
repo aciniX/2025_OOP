@@ -9,10 +9,11 @@ class Player():
         self.__speed = 2
         self.__height = sprite.get_height()  # height of sprite
         self.__width = sprite.get_width()
-        self.__xPos = xPos/2 - self.__width/2  # set spawn to centre of screen
-        self.__yPos = yPos/2 - self.__height/2
+        self.__xPos = float(xPos//2 - self.__width//2)  # set spawn to centre of screen
+        self.__yPos = float(yPos//2 - self.__height//2)
         self.__rotation_speed = 3  # degrees per frame
         self.__angle = 90  # rotation angle in degrees
+        self.__spawnDist = 10
 
     def Movement(self, keysPressed, obstacles):
         old_x = self.__xPos  # save a reference to the players current location
@@ -23,27 +24,29 @@ class Player():
             self.__angle += self.__rotation_speed
         if keysPressed[pygame.K_d] or keysPressed[pygame.K_RIGHT]:
             self.__angle -= self.__rotation_speed
-
+        
         # angle conversion from rad to deg for trigonometry
         rad = math.radians(self.__angle)
         dx = math.cos(rad) * self.__speed
         dy = -math.sin(rad) * self.__speed  # negative because screen y increases downward
 
-        # if keysPressed[pygame.K_w] or keysPressed[pygame.K_UP]:
-        #     self.__yPos -= self.__speed
-        # if keysPressed[pygame.K_s] or keysPressed[pygame.K_DOWN]:
-        #     self.__yPos += self.__speed
-
         # always move forward
         self.__xPos += dx
         self.__yPos += dy        
         
+        if keysPressed[pygame.K_SPACE]:
+            self.Shoot()
+
         # if player desired position collides with object dont move it
         player_rect = self.GetRect() # Check collisions
-        for obstacle in obstacles:
-            if player_rect.colliderect(obstacle):
-                self.__xPos = old_x
-                self.__yPos = old_y
+        if len(obstacles) > 0:
+            for obstacle in obstacles:
+                if player_rect.colliderect(obstacle.GetRect()):
+                    self.__xPos = old_x
+                    self.__yPos = old_y
+
+        # self.__wallSpawn = self.CalcWallSpawnPoint(self.__xPos, self.__yPos, -self.__spawnDist, self.__angle)
+        # self.SpawnWall()
     
     def GetXPos(self):
         return self.__xPos
@@ -53,7 +56,7 @@ class Player():
     
     def GetPos(self):
         return (self.__xPos, self.__yPos)
-    
+       
     def DrawSprite(self):
         # Rotate the original image by the current angle
         rotated_sprite = pygame.transform.rotate(self.__sprite, self.__angle - 90)
@@ -64,40 +67,98 @@ class Player():
         #self.__surface.blit(self.__sprite, (self.__xPos, self.__yPos),)
 
     def GetRect(self):
-        return pygame.Rect(self.__xPos, self.__yPos, self.__width, self.__height)    
+        return pygame.Rect(self.__xPos, self.__yPos, self.__width, self.__height)
+    
+    def GetCenter(self):
+        return self.GetRect().center
+    
+    def CalcSpawnPoint(self):
+        # Use math.cos(angle) and math.sin(angle) to get the forward vector
+        # Multiply by the desired distance (10 units)
+        # Add to player’s center position
+        # Subtract sin from Y to compensate for pygame’s inverted Y axis
+        rad = math.radians(self.__angle)
+        xSpawn = self.__xPos + math.cos(rad) * self.__spawnDist
+        ySpawn = self.__yPos - math.sin(rad) * self.__spawnDist
+        return (xSpawn, ySpawn)
+
+    def SpawnWall(self):
+        obstacles.append(Walls(surface, wallSprite, self.__wallSpawn, 1))
+
+    def Shoot(self):
+        projectiles.append(Projectile(self.__surface, projectileSprite, self.__angle, self.CalcSpawnPoint()))
 #endregion player
+
+#region projectile
+class Projectile():
+    def __init__(self, surface, sprite, angle, sPoint):
+        self.__surface = surface
+        self.__sprite = sprite
+        self.__angle = angle
+        self.__height = sprite.get_height()  # height of sprite
+        self.__width = sprite.get_width()
+        self.__xPos = int(sPoint[0])
+        self.__yPos = int(sPoint[1])
+        self.__speed = 10
+
+    def Movement(self):
+        rad = math.radians(self.__angle)
+        self.__xPos += math.cos(rad) * self.__speed
+        self.__yPos -= math.sin(rad) * self.__speed
+    
+    def GetRect(self):
+        return pygame.Rect(self.__xPos, self.__yPos, self.__width, self.__height)
+    
+    def DrawSprite(self):
+        # Rotate the original image by the current angle
+        rotated_sprite = pygame.transform.rotate(self.__sprite, self.__angle - 90)
+        # Get the new rect and center it at the current position
+        rect = rotated_sprite.get_rect(center=(self.__xPos, self.__yPos))
+        # Draw the rotated image
+        self.__surface.blit(rotated_sprite, rect.topleft)
+        #self.__surface.blit(self.__sprite, (self.__xPos, self.__yPos),)
+#endregion
 
 #region walls
 class Walls():
-    def __init__(self, surface, sprite, xPos, yPos, owner):
+    def __init__(self, surface, sprite, sPoint, owner):
         self.__surface = surface
         self.__sprite = sprite
         self.__height = sprite.get_height()  # height of sprite
         self.__width = sprite.get_width()
-        self.__xPos = xPos/2 - self.__width/2  # set spawn to centre of screen
-        self.__yPos = yPos/2 - self.__height/2
+        self.__xPos = sPoint[0] + self.__width/2
+        self.__yPos = sPoint[1] + self.__height/2
         self.__owner = owner
-        if owner == 1:
-            sprite.fill(255, 255, 0)
+        self.__name = "WALL"
+        print(self.__owner)
+        if self.__owner == 1:
+            self.__color = (255, 0, 0)
         else:
-            sprite.fill(0, 255, 255)
+            self.__color = (0, 255, 0)
+        self.__sprite.fill(self.__color)
+        if self.CheckWallCollision(obstacles):
+            self.DestroyObject(obstacles)
+    
+    def __del__(self):
+        print(f"Object {self.__name} {self.__owner} destroyed")
         
-        def DrawSprite(self):
-            self.__surface.blit(self.__sprite, (self.__xPos, self.__yPos),)
+    def DrawSprite(self):
+        self.__surface.blit(self.__sprite, (self.__xPos, self.__yPos),)
 
-        def GetRect(self):
-            return pygame.Rect(self.__xPos, self.__yPos, self.__width, self.__height)
+    def GetRect(self):
+        return pygame.Rect(self.__xPos, self.__yPos, self.__width, self.__height)
         
-        def DestroyObject(self, objectList):
-            objectList.remove(self)
+    def DestroyObject(self, objectList):
+        objectList.remove(self)
+        # del(self)
 
-        def CheckWallCollision(self, objectList):
-            print('check')
-            thisRect = GetRect()
-            for object in objectList:
-                if thisRect.collideRect(object):
-                    return True
-            return False
+    def CheckWallCollision(self, objectList):
+        print('check')
+        # thisRect = pygame.Rect(self.__xPos, self.__yPos, self.__width, self.__height)
+        for object in objectList:
+            if self.GetRect().colliderect(object.GetRect()):
+                return True
+        return False
  
 
 #endregion walls
@@ -131,15 +192,22 @@ cSpeed = 60  # limit the FPS
 
 # player shape
 # player = pygame.Rect(150, 150, 50, 50)
-playerSprite = pygame.image.load("Intro\sprites\player.png").convert_alpha()
+pSprite = pygame.image.load("Intro\sprites\player.png").convert_alpha()
+playerSprite = pygame.transform.smoothscale(pSprite,(24,24))
+# playerSprite.set_colorkey((255,0,0))
+proSprite = pygame.image.load("Intro\sprites\projectile.png").convert_alpha()
+projectileSprite = pygame.transform.smoothscale(proSprite,(12, 12))
 wallSprite = pygame.image.load("Intro\sprites\wall.png").convert_alpha()
 # surface.blit(playerSprite, (20,20),)  # needs to move to draw function
 
 player = Player(surface, playerSprite, screenWidth, screenHeight)  # instantiate player object
 
 obstacles = []  # obstacle list
-obstacles.append(pygame.Rect(100, 100, 50, 300))  # object for collision testing
-obstacles.append(pygame.Rect(200, 200 ,200, 50))
+projectiles = []
+# obstacles.append(pygame.Rect(100, 100, 50, 300))  # object for collision testing
+# obstacles.append(pygame.Rect(200, 200 ,200, 50))
+# obstacles.append(Walls(surface, wallSprite, 1200, 500, 1))
+# obstacles.append(Walls(surface, wallSprite, 600, 600, 2))
 
 def Draw():
     # Changing surface color
@@ -147,9 +215,12 @@ def Draw():
     # pygame.draw.rect(surface, (255, 0, 0), player)
     # surface.blit(playerSprite, (20,20),)
     for obstacle in obstacles:
-        pygame.draw.rect(surface, (255, 255, 0), obstacle)  # Draw the obstacle (yellow)
-
+        # pygame.draw.rect(surface, (255, 255, 0), obstacle)  # Draw the obstacle (yellow)
+        obstacle.DrawSprite()
     player.DrawSprite()
+
+    for projectile in projectiles:
+        projectile.DrawSprite()
     
 # creating a bool value which checks allows the game to run
 running = True
@@ -168,6 +239,9 @@ while running:
     keys = pygame.key.get_pressed()
     # call player movement to get new player position
     player.Movement(keys, obstacles)
+
+    for projectile in projectiles:
+        projectile.Movement()
         
     # print(player.GetPos())
     Draw()
