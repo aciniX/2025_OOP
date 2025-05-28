@@ -13,7 +13,11 @@ class Player():
         self.__yPos = float(yPos//2 - self.__height//2)
         self.__rotation_speed = 3  # degrees per frame
         self.__angle = 90  # rotation angle in degrees
-        self.__spawnDist = 10
+        self.__spawnDist = 10  #spawn distance of projectile from player
+        self.__lastShotTime = 0  #track of taime taken between shots
+        self.__cooldown = 500  # minimum ms between shots taken
+        self.__ogCD = self.__cooldown
+
 
     def Movement(self, keysPressed, obstacles):
         old_x = self.__xPos  # save a reference to the players current location
@@ -34,8 +38,9 @@ class Player():
         self.__xPos += dx
         self.__yPos += dy        
         
-        if keysPressed[pygame.K_SPACE]:
+        if keysPressed[pygame.K_SPACE] and self.CanShoot():
             self.Shoot()
+            self.UpdateLastShotTime()
 
         # if player desired position collides with object dont move it
         player_rect = self.GetRect() # Check collisions
@@ -72,6 +77,9 @@ class Player():
     def GetCenter(self):
         return self.GetRect().center
     
+    def GetAngle(self):
+        return self.__angle
+    
     def CalcSpawnPoint(self):
         # Use math.cos(angle) and math.sin(angle) to get the forward vector
         # Multiply by the desired distance (10 units)
@@ -87,6 +95,22 @@ class Player():
 
     def Shoot(self):
         projectiles.append(Projectile(self.__surface, projectileSprite, self.__angle, self.CalcSpawnPoint()))
+
+    def CanShoot(self):
+        now = pygame.time.get_ticks()
+        return now - self.__lastShotTime >= self.__cooldown
+
+    def UpdateLastShotTime(self):
+        self.__lastShotTime = pygame.time.get_ticks()
+
+    def SetCooldown(self, value):
+        self.__cooldown = value
+
+    def ChangeCooldown(self, value):
+        self.__cooldown += value
+    
+    def ResetCoolDown(self):
+        self.__cooldown = self.__ogCD
 #endregion player
 
 #region projectile
@@ -117,6 +141,10 @@ class Projectile():
         # Draw the rotated image
         self.__surface.blit(rotated_sprite, rect.topleft)
         #self.__surface.blit(self.__sprite, (self.__xPos, self.__yPos),)
+
+    def IsOffScreen(self, width, height):
+        #check if object is within screen bounds
+        return not (0 <= self.__xPos <= width and 0 <= self.__yPos <= height)
 #endregion
 
 #region walls
@@ -242,6 +270,8 @@ while running:
 
     for projectile in projectiles:
         projectile.Movement()
+        if projectile.IsOffScreen(screenWidth, screenHeight):
+            projectiles.remove(projectile)
         
     # print(player.GetPos())
     Draw()
