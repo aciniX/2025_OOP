@@ -13,10 +13,12 @@ class Player():
         self.__yPos = float(yPos//2 - self.__height//2)
         self.__rotation_speed = 3  # degrees per frame
         self.__angle = 90  # rotation angle in degrees
-        self.__spawnDist = 10  #spawn distance of projectile from player
+        self.__spawnDist = 20  #spawn distance of projectile from player
         self.__lastShotTime = 0  #track of taime taken between shots
         self.__cooldown = 500  # minimum ms between shots taken
         self.__ogCD = self.__cooldown
+        self.__wall_spacing = 10  # Minimum distance before next wall
+        self.__last_wall_pos = (self.__xPos, self.__yPos)
 
 
     def Movement(self, keysPressed, obstacles):
@@ -31,13 +33,9 @@ class Player():
         
         # angle conversion from rad to deg for trigonometry
         rad = math.radians(self.__angle)
-        dx = math.cos(rad) * self.__speed
-        dy = -math.sin(rad) * self.__speed  # negative because screen y increases downward
+        self.__xPos += math.cos(rad) * self.__speed
+        self.__yPos += -math.sin(rad) * self.__speed  # negative because screen y increases downward
 
-        # always move forward
-        self.__xPos += dx
-        self.__yPos += dy        
-        
         if keysPressed[pygame.K_SPACE] and self.CanShoot():
             self.Shoot()
             self.UpdateLastShotTime()
@@ -49,9 +47,15 @@ class Player():
                 if player_rect.colliderect(obstacle.GetRect()):
                     self.__xPos = old_x
                     self.__yPos = old_y
+        
+
 
         # self.__wallSpawn = self.CalcWallSpawnPoint(self.__xPos, self.__yPos, -self.__spawnDist, self.__angle)
-        # self.SpawnWall()
+        self.SpawnWall()
+
+    @staticmethod
+    def GetDistance(a,b):
+        return math.hypot(a[0] - b[0], a[1] - b[1])
     
     def GetXPos(self):
         return self.__xPos
@@ -75,7 +79,9 @@ class Player():
         return pygame.Rect(self.__xPos, self.__yPos, self.__width, self.__height)
     
     def GetCenter(self):
-        return self.GetRect().center
+        x = self.__xPos + self.__sprite.get_width()/2
+        y = self.__yPos + self.__sprite.get_height()/2
+        return (x,y)
     
     def GetAngle(self):
         return self.__angle
@@ -89,9 +95,23 @@ class Player():
         xSpawn = self.__xPos + math.cos(rad) * self.__spawnDist
         ySpawn = self.__yPos - math.sin(rad) * self.__spawnDist
         return (xSpawn, ySpawn)
+    
+    def CalcWallSpawnPoint(self):
+        rad = math.radians(self.__angle + 180)  # behind player
+        center = self.GetCenter()
+        x = center[0] + math.cos(rad) * self.__spawnDist
+        y = center[1] - math.sin(rad) * self.__spawnDist
+
+        x -= wallWidth / 2
+        y -= wallHeight / 2
+
+        return (x,y)
 
     def SpawnWall(self):
-        obstacles.append(Walls(surface, wallSprite, self.__wallSpawn, 1))
+        spawn = self.CalcWallSpawnPoint()
+        if self.GetDistance(spawn, self.__last_wall_pos) >= self.__wall_spacing:
+            obstacles.append(Walls(surface, wallSprite, self.CalcWallSpawnPoint(), 1))
+            self.__last_wall_pos = spawn
 
     def Shoot(self):
         projectiles.append(Projectile(self.__surface, projectileSprite, self.__angle, self.CalcSpawnPoint()))
@@ -154,8 +174,8 @@ class Walls():
         self.__sprite = sprite
         self.__height = sprite.get_height()  # height of sprite
         self.__width = sprite.get_width()
-        self.__xPos = sPoint[0] + self.__width/2
-        self.__yPos = sPoint[1] + self.__height/2
+        self.__xPos = sPoint[0]
+        self.__yPos = sPoint[1]
         self.__owner = owner
         self.__name = "WALL"
         print(self.__owner)
@@ -164,8 +184,9 @@ class Walls():
         else:
             self.__color = (0, 255, 0)
         self.__sprite.fill(self.__color)
-        if self.CheckWallCollision(obstacles):
-            self.DestroyObject(obstacles)
+        
+        #if self.CheckWallCollision(obstacles):
+        #    self.DestroyObject(obstacles)
     
     def __del__(self):
         print(f"Object {self.__name} {self.__owner} destroyed")
@@ -220,12 +241,12 @@ cSpeed = 60  # limit the FPS
 
 # player shape
 # player = pygame.Rect(150, 150, 50, 50)
-pSprite = pygame.image.load("Intro\sprites\player.png").convert_alpha()
-playerSprite = pygame.transform.smoothscale(pSprite,(24,24))
+playerSprite = pygame.image.load("Intro\sprites\player.png").convert_alpha()
 # playerSprite.set_colorkey((255,0,0))
 proSprite = pygame.image.load("Intro\sprites\projectile.png").convert_alpha()
-projectileSprite = pygame.transform.smoothscale(proSprite,(12, 12))
+projectileSprite = pygame.transform.smoothscale(proSprite,(8, 8))
 wallSprite = pygame.image.load("Intro\sprites\wall.png").convert_alpha()
+wallWidth, wallHeight = wallSprite.get_size()
 # surface.blit(playerSprite, (20,20),)  # needs to move to draw function
 
 player = Player(surface, playerSprite, screenWidth, screenHeight)  # instantiate player object
