@@ -40,9 +40,7 @@ class Player():
         # self.__wallSpawn = self.CalcWallSpawnPoint(self.__xPos, self.__yPos, -self.__spawnDist, self.__angle)
         self.SpawnWall()
 
-    @staticmethod
-    def GetDistance(a,b):
-        return math.hypot(a[0] - b[0], a[1] - b[1])
+    
     
     def GetXPos(self):
         return self.__xPos
@@ -94,11 +92,7 @@ class Player():
 
         return (x,y)
 
-    def SpawnWall(self):
-        spawn = self.CalcWallSpawnPoint()
-        if self.GetDistance(spawn, self.__lastWallPos) >= self.__wallSpacing:
-            obstacles.append(Walls(surface, wallSprite, self.CalcWallSpawnPoint(), 1))
-            self.__lastWallPos = spawn
+        
 
     def CanShoot(self):
         now = pygame.time.get_ticks()

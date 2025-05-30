@@ -1,80 +1,14 @@
 import pygame
 import math
-import Player
+import Player, Wall, Projectile
 
-#region projectile
-class Projectile():
-    def __init__(self, surface, sprite, angle, sPoint):
-        self.__surface = surface
-        self.__sprite = sprite
-        self.__angle = angle
-        self.__height = sprite.get_height()  # height of sprite
-        self.__width = sprite.get_width()
-        self.__xPos = int(sPoint[0])
-        self.__yPos = int(sPoint[1])
-        self.__speed = 10
 
-    def Movement(self):
-        rad = math.radians(self.__angle)
-        self.__xPos += math.cos(rad) * self.__speed
-        self.__yPos -= math.sin(rad) * self.__speed
-    
-    def GetRect(self):
-        return pygame.Rect(self.__xPos, self.__yPos, self.__width, self.__height)
-    
-    def DrawSprite(self):
-        # Rotate the original image by the current angle
-        rotated_sprite = pygame.transform.rotate(self.__sprite, self.__angle - 90)
-        # Get the new rect and center it at the current position
-        rect = rotated_sprite.get_rect(center=(self.__xPos, self.__yPos))
-        # Draw the rotated image
-        self.__surface.blit(rotated_sprite, rect.topleft)
-        #self.__surface.blit(self.__sprite, (self.__xPos, self.__yPos),)
 
-    def IsOffScreen(self, width, height):
-        #check if object is within screen bounds
-        return not (0 <= self.__xPos <= width and 0 <= self.__yPos <= height)
-#endregion
 
-#region walls
-class Walls():
-    def __init__(self, surface, sprite, sPoint, owner):
-        self.__surface = surface
-        self.__sprite = sprite
-        self.__height = sprite.get_height()  # height of sprite
-        self.__width = sprite.get_width()
-        self.__xPos = sPoint[0]
-        self.__yPos = sPoint[1]
-        self.__owner = owner
-        self.__name = "WALL"
-        print(self.__owner)
-        if self.__owner == 1:
-            self.__color = (255, 0, 0)
-        else:
-            self.__color = (0, 255, 0)
-        self.__sprite.fill(self.__color)
-        
-        #if self.CheckWallCollision(obstacles):
-        #    self.DestroyObject(obstacles)
-    
-    def __del__(self):
-        print(f"Object {self.__name} {self.__owner} destroyed")
-        
-    def DrawSprite(self):
-        self.__surface.blit(self.__sprite, (self.__xPos - self.__width /2, self.__yPos - self.__height/2),)
-
-    def GetRect(self):
-        return pygame.Rect(self.__xPos, self.__yPos, self.__width, self.__height)
-    
- 
-
-#endregion walls
 # initializing all the imported pygame modules
 (numpass,numfail) = pygame.init()
 
 pygame.font.init()  # initialise the use of fonts
-
-
 
 # printing the number of modules initialized successfully
 print('Number of modules initialized successfully:', numpass)
@@ -122,8 +56,7 @@ projectiles = []
 # obstacles.append(Walls(surface, wallSprite, 600, 600, 2))
 
 score = 0
-# set text boxes
-txtScore = gameFont.render(f"Score: {GetScore()}", True, (255, 255, 255))  # white text
+
 
 # creating a bool value which checks allows the game to run
 running = True
@@ -175,7 +108,20 @@ def CheckCollisions():
 
 def Shoot():
     projectiles.append(Projectile(surface, projectileSprite, player.GetAngle(), player.CalcSpawnPoint()))
+
+def GenerateWall():
+    # check distance from last wall spawned to the to wall spawn point on the player, if > distance then spawn wall
+    spawn = player.CalcWallSpawnPoint()
+        if GetDistance(spawn, self.__lastWallPos) >= self.__wallSpacing:
+            walls.append(Wall(surface, wallSprite, spawn, 1))
+            self.__lastWallPos = spawn
+
+def GetDistance(a,b):
+    return math.hypot(a[0] - b[0], a[1] - b[1])
 #endregion
+
+# set text boxes
+txtScore = gameFont.render(f"Score: {GetScore()}", True, (255, 255, 255))
 
 # keep game running till running is true (run the game loop while true)
 while running: 
