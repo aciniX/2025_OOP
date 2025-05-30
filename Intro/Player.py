@@ -2,7 +2,7 @@ import pygame
 import math
 
 class Player():
-    def __init__(self, surface, sprite, xPos, yPos, wallSprite):
+    def __init__(self, surface, sprite, xPos, yPos, wallSprite, spawnDist):
         self.__surface = surface
         self.__sprite = sprite
         self.__speed = 2
@@ -12,11 +12,10 @@ class Player():
         self.__yPos = float(yPos//2 - self.__height//2)
         self.__rotation_speed = 3  # degrees per frame
         self.__angle = 90  # rotation angle in degrees
-        self.__spawnDist = 20  #spawn distance of projectile from player
+        self.__spawnDist = spawnDist  #spawn distance of projectile from player
         self.__lastShotTime = 0  #track of taime taken between shots
         self.__cooldown = 500  # minimum ms between shots taken
         self.__ogCD = self.__cooldown
-        self.__wallSpacing = 14  # Minimum distance before next wall
         self.__wallWidth, self.__wallHeight = wallSprite.get_size()
         
 
@@ -48,7 +47,7 @@ class Player():
         # Rotate the original image by the current angle
         rotated_sprite = pygame.transform.rotate(self.__sprite, self.__angle - 90)
         # Get the new rect and center it at the current position
-        rect = rotated_sprite.get_rect(center=(self.__xPos, self.__yPos))
+        rect = rotated_sprite.get_rect(center=(self.GetCenter()))
         # Draw the rotated image
         self.__surface.blit(rotated_sprite, rect.topleft)
         #self.__surface.blit(self.__sprite, (self.__xPos, self.__yPos),)
@@ -57,9 +56,8 @@ class Player():
         return pygame.Rect(self.__xPos, self.__yPos, self.__width, self.__height)
     
     def GetCenter(self):
-        x = self.__xPos + self.__sprite.get_width()/2
-        y = self.__yPos + self.__sprite.get_height()/2
-        return (x,y)
+        width, height = self.__sprite.get_size()
+        return (self.__xPos + width / 2, self.__yPos + height / 2)
     
     def GetAngle(self):
         return self.__angle
@@ -79,10 +77,6 @@ class Player():
         center = self.GetCenter()
         x = center[0] + math.cos(rad) * self.__spawnDist
         y = center[1] - math.sin(rad) * self.__spawnDist
-
-        x -= self.__wallWidth / 2
-        y -= self.__wallHeight / 2
-
         return (x,y)
 
     def CanShoot(self):

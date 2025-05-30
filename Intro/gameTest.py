@@ -34,6 +34,7 @@ cSpeed = 60  # limit the FPS
 # set fonts
 gameFont = pygame.font.Font("Intro\Resources\systemerror.ttf")
 
+wallSpacing = 30
 #endregion
 
 # sprites
@@ -44,7 +45,7 @@ wSprite = pygame.image.load("Intro\sprites\wall.png").convert_alpha()
 wallSprite = pygame.transform.scale(proSprite,(16, 16))
 wallWidth, wallHeight = wallSprite.get_size()
 
-player = Player.Player(surface, playerSprite, screenWidth, screenHeight, wallSprite)  # instantiate player object
+player = Player.Player(surface, playerSprite, screenWidth, screenHeight, wallSprite, wallSpacing)  # instantiate player object
 
 walls = []  # wall list
 projectiles = []
@@ -52,9 +53,9 @@ projectiles = []
 score = 0
 lastScoreInc = pygame.time.get_ticks()
 
-wallSpacing = 15
 lastWallPos = None
 lastWall = None
+lastSpawnPoint = None
 
 # creating a bool value which checks allows the game to run
 running = True
@@ -96,6 +97,8 @@ def Draw():
     
     # draw UI
     surface.blit(txtScore, (10, 10))
+
+    VisualDebugger()
     
 def CheckCollisions():
     # player --> walls -- trigger death
@@ -118,17 +121,43 @@ def Shoot():
 
 def GenerateWall():
     # check distance from last wall spawned to the to wall spawn point on the player, if > distance then spawn wall
-    global lastWall
+    global lastWall, lastSpawnPoint
+
     spawn = player.CalcWallSpawnPoint()
+
     if lastWall == None:
-        lastWall = Wall.Walls(surface, wallSprite, spawn, 1, origin=player.GetCenter())
-        walls.append(lastWall)
-    elif GetDistance(player.GetCenter(), lastWall.GetPosition()) >= wallSpacing:
         lastWall = Wall.Walls(surface, wallSprite, spawn, 1)
+        lastSpawnPoint = spawn
+        walls.append(lastWall)
+    elif GetDistance(spawn, lastSpawnPoint) >= wallSpacing/2:
+        lastWall = Wall.Walls(surface, wallSprite, spawn, 1)
+        lastSpawnPoint = spawn
         walls.append(lastWall)
 
 def GetDistance(a,b):
     return math.hypot(a[0] - b[0], a[1] - b[1])
+
+def VisualDebugger():
+    # === Debug Lines & Markers ===
+    global lastWall
+    player_center = player.GetCenter()
+    spawn_point = player.CalcWallSpawnPoint()
+    
+    # Draw line from center to spawn point (wall direction)
+    pygame.draw.line(surface, (255, 255, 0), player_center, spawn_point, 2)
+
+    # Draw circle at center of player (green)
+    pygame.draw.circle(surface, (0, 255, 0), (int(player_center[0]), int(player_center[1])), 5)
+
+    # Draw circle at spawn point (blue)
+    pygame.draw.circle(surface, (0, 0, 255), (int(spawn_point[0]), int(spawn_point[1])), 5)
+
+    # Draw circle at last wall origin/position (yellow)
+    if lastWall:
+        pygame.draw.circle(surface, (255, 255, 0), (int(lastWall.GetPosition()[0]), int(lastWall.GetPosition()[1])), 5)
+
+    # Optional: draw wall spacing radius as a circle
+    pygame.draw.circle(surface, (255, 0, 255), (int(player_center[0]), int(player_center[1])), wallSpacing, 1)
 #endregion
 
 # set text boxes

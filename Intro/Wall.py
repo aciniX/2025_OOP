@@ -25,13 +25,20 @@ class Walls():
     #     print(f"Object {self.__name} {self.__owner} destroyed")
     
     def GetPosition(self):
-        return (self.__xPos - self.__width /2, self.__yPos - self.__height/2)
+        width, height = self.__sprite.get_size()
+        return (self.__xPos + width / 2, self.__yPos + height / 2)
 
     def DrawSprite(self):
-        self.__surface.blit(self.__sprite, (self.__xPos - self.__width /2, self.__yPos - self.__height/2),)
+        sprite_rect = self.__sprite.get_rect(center=(self.__xPos, self.__yPos))
+        self.__surface.blit(self.__sprite, sprite_rect)
+        pygame.draw.circle(self.__surface, (0, 255, 0), (self.__xPos, self.__yPos), 3)
 
     def GetRect(self):
         return pygame.Rect(self.__xPos, self.__yPos, self.__width, self.__height)
+    
+    def GetCenter(self):
+        width, height = self.__sprite.get_size()
+        return (self.__xPos + width / 2, self.__yPos + height / 2)
     
     def GetOrigin(self):
         return self.__origin
