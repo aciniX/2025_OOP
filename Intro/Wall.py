@@ -1,7 +1,7 @@
 import pygame
 
 class Walls():
-    def __init__(self, surface, sprite, sPoint, owner):
+    def __init__(self, surface, sprite, sPoint, owner, origin=(0,0)):
         self.__surface = surface
         self.__sprite = sprite
         self.__height = sprite.get_height()  # height of sprite
@@ -10,7 +10,8 @@ class Walls():
         self.__yPos = sPoint[1]
         self.__owner = owner
         self.__name = "WALL"
-        print(self.__owner)
+        self.__origin = origin
+        # print(self.__owner)
         if self.__owner == 1:
             self.__color = (255, 0, 0)
         else:
@@ -20,11 +21,19 @@ class Walls():
         #if self.CheckWallCollision(obstacles):
         #    self.DestroyObject(obstacles)
     
-    def __del__(self):
-        print(f"Object {self.__name} {self.__owner} destroyed")
-        
+    # def __del__(self):
+    #     print(f"Object {self.__name} {self.__owner} destroyed")
+    
+    def GetPosition(self):
+        return (self.__xPos - self.__width /2, self.__yPos - self.__height/2)
+
     def DrawSprite(self):
         self.__surface.blit(self.__sprite, (self.__xPos - self.__width /2, self.__yPos - self.__height/2),)
 
     def GetRect(self):
         return pygame.Rect(self.__xPos, self.__yPos, self.__width, self.__height)
+    
+    def GetOrigin(self):
+        return self.__origin
+    
+    

@@ -3,8 +3,7 @@ import math
 import Player, Wall, Projectile
 
 
-
-
+#region setup
 # initializing all the imported pygame modules
 (numpass,numfail) = pygame.init()
 
@@ -13,7 +12,6 @@ pygame.font.init()  # initialise the use of fonts
 # printing the number of modules initialized successfully
 print('Number of modules initialized successfully:', numpass)
 
-#region setup
 # resolution of the window
 screenWidth = 1280
 screenHeight = 720 
@@ -46,39 +44,48 @@ wSprite = pygame.image.load("Intro\sprites\wall.png").convert_alpha()
 wallSprite = pygame.transform.scale(proSprite,(16, 16))
 wallWidth, wallHeight = wallSprite.get_size()
 
-player = Player(surface, playerSprite, screenWidth, screenHeight, wallSprite)  # instantiate player object
+player = Player.Player(surface, playerSprite, screenWidth, screenHeight, wallSprite)  # instantiate player object
 
 walls = []  # wall list
 projectiles = []
-# obstacles.append(pygame.Rect(100, 100, 50, 300))  # object for collision testing
-# obstacles.append(pygame.Rect(200, 200 ,200, 50))
-# obstacles.append(Walls(surface, wallSprite, 1200, 500, 1))
-# obstacles.append(Walls(surface, wallSprite, 600, 600, 2))
 
 score = 0
+lastScoreInc = pygame.time.get_ticks()
 
+wallSpacing = 15
+lastWallPos = None
+lastWall = None
 
 # creating a bool value which checks allows the game to run
 running = True
 
 #region subroutines
 def UpdateScore(s):
+    global score
     score += s
 
 def SetScore(s):
+    global score
     score = s
 
 def GetScore():
     return score
+
+def GameScore():
+    global lastScoreInc
+    now = pygame.time.get_ticks()
+    if (now - lastScoreInc) >= 1000:
+        lastScoreInc = now
+        UpdateScore(1)
 
 def Draw():
     # Changing surface color
     surface.fill(bgColor)  # setting acolor for the background
     
     # draw obstacles
-    for obstacle in obstacles:
+    for wall in walls:
         # pygame.draw.rect(surface, (255, 255, 0), obstacle)  # Draw the obstacle (yellow)
-        obstacle.DrawSprite()
+        wall.DrawSprite()
 
     # draw player    
     player.DrawSprite()
@@ -107,14 +114,18 @@ def CheckCollisions():
                 break
 
 def Shoot():
-    projectiles.append(Projectile(surface, projectileSprite, player.GetAngle(), player.CalcSpawnPoint()))
+    projectiles.append(Projectile.Projectile(surface, projectileSprite, player.GetAngle(), player.CalcSpawnPoint()))
 
 def GenerateWall():
     # check distance from last wall spawned to the to wall spawn point on the player, if > distance then spawn wall
+    global lastWall
     spawn = player.CalcWallSpawnPoint()
-        if GetDistance(spawn, self.__lastWallPos) >= self.__wallSpacing:
-            walls.append(Wall(surface, wallSprite, spawn, 1))
-            self.__lastWallPos = spawn
+    if lastWall == None:
+        lastWall = Wall.Walls(surface, wallSprite, spawn, 1, origin=player.GetCenter())
+        walls.append(lastWall)
+    elif GetDistance(player.GetCenter(), lastWall.GetPosition()) >= wallSpacing:
+        lastWall = Wall.Walls(surface, wallSprite, spawn, 1)
+        walls.append(lastWall)
 
 def GetDistance(a,b):
     return math.hypot(a[0] - b[0], a[1] - b[1])
@@ -123,6 +134,7 @@ def GetDistance(a,b):
 # set text boxes
 txtScore = gameFont.render(f"Score: {GetScore()}", True, (255, 255, 255))
 
+#region gameloop
 # keep game running till running is true (run the game loop while true)
 while running: 
     
@@ -138,19 +150,22 @@ while running:
     # handle player shooting
     if keys[pygame.K_SPACE] and player.CanShoot():
         player.UpdateLastShotTime()
+        Shoot()
 
     # call player movement to get new player position
     player.Movement(keys, walls)
-    player.UpdateScore()
+    GenerateWall()
+    GameScore()
+    txtScore = gameFont.render(f"Score: {GetScore()}", True, (255, 255, 255))
 
+    # remove projectiles that go off the screen
     for projectile in projectiles:
         projectile.Movement()
         if projectile.IsOffScreen(screenWidth, screenHeight):
             projectiles.remove(projectile)
-            Shoot()
-    # print(player.GetPos())
+            
     Draw()
     CheckCollisions()
     pygame.display.update()  # update the display    
     clock.tick(cSpeed) # sets the FPS
-    
+#endregion    

@@ -17,9 +17,7 @@ class Player():
         self.__cooldown = 500  # minimum ms between shots taken
         self.__ogCD = self.__cooldown
         self.__wallSpacing = 14  # Minimum distance before next wall
-        self.__lastWallPos = (self.__xPos, self.__yPos)
-        self.__lastScoreInc = 0
-        self.__wallWidth, self.__wallHeight = wallSprite.GetSize()
+        self.__wallWidth, self.__wallHeight = wallSprite.get_size()
         
 
     def Movement(self, keysPressed, obstacles):
@@ -36,12 +34,7 @@ class Player():
         rad = math.radians(self.__angle)
         self.__xPos += math.cos(rad) * self.__speed
         self.__yPos += -math.sin(rad) * self.__speed  # negative because screen y increases downward   
-
-        # self.__wallSpawn = self.CalcWallSpawnPoint(self.__xPos, self.__yPos, -self.__spawnDist, self.__angle)
-        self.SpawnWall()
-
-    
-    
+  
     def GetXPos(self):
         return self.__xPos
     
@@ -92,8 +85,6 @@ class Player():
 
         return (x,y)
 
-        
-
     def CanShoot(self):
         now = pygame.time.get_ticks()
         return now - self.__lastShotTime >= self.__cooldown
@@ -110,8 +101,4 @@ class Player():
     def ResetCoolDown(self):
         self.__cooldown = self.__ogCD
 
-    def UpdateScore(self):
-        now = pygame.time.get_ticks()
-        if (now - self.__lastScoreInc) >= 10:
-            self.__lastScoreInc = now
-            UpdateScore(1)
+    
