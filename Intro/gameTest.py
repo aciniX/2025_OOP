@@ -58,6 +58,8 @@ lastWallPos = None
 lastWall = None
 lastSpawnPoint = None
 
+dead = False
+
 # creating a bool value which checks allows the game to run
 running = True
 
@@ -102,12 +104,15 @@ def Draw():
     VisualDebugger()
     
 def CheckCollisions():
+    global dead
     # player --> walls -- trigger death
     player_rect = player.GetRect()
     if len(walls) > 0:
+        dead = False
         for wall in walls:
             if player_rect.colliderect(wall.GetRect()):
                 print('dead')
+                dead = True
 
     # projectile --> wall
     for projectile in projectiles[:]:
@@ -139,19 +144,26 @@ def GetDistance(a,b):
     return math.hypot(a[0] - b[0], a[1] - b[1])
 
 def VisualDebugger():
+    global dead
     # === Debug Lines & Markers ===
     global lastWall
     player_center = player.GetCenter()
     spawn_point = player.CalcWallSpawnPoint()
+    proj_spawn = player.CalcSpawnPoint()
     
     # Draw line from center to spawn point (wall direction)
     pygame.draw.line(surface, (255, 255, 0), player_center, spawn_point, 2)
 
     # Draw circle at center of player (green)
-    pygame.draw.circle(surface, (0, 255, 0), (int(player_center[0]), int(player_center[1])), 5)
+    if dead:
+        pygame.draw.circle(surface, (255, 0, 0), (int(player_center[0]), int(player_center[1])), 5)
+    else:
+        pygame.draw.circle(surface, (0, 255, 0), (int(player_center[0]), int(player_center[1])), 5)
 
     # Draw circle at spawn point (blue)
     pygame.draw.circle(surface, (0, 0, 255), (int(spawn_point[0]), int(spawn_point[1])), 5)
+    # Draw circle at spawn point
+    pygame.draw.circle(surface, (0, 255, 255), (int(proj_spawn[0]), int(proj_spawn[1])), 5)
 
     # Draw circle at last wall origin/position (yellow)
     if lastWall:
@@ -164,6 +176,8 @@ def VisualDebugger():
     pygame.draw.rect(surface, (255, 0, 0), player.GetRect(), 1)
     for projectile in projectiles:
         pygame.draw.rect(surface, (0, 255, 0), projectile.GetRect(), 1)
+    for wall in walls:
+        pygame.draw.rect(surface, (0, 255, 255), wall.GetRect(), 1)
 #endregion
 
 # set text boxes
