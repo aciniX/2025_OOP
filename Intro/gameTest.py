@@ -39,8 +39,9 @@ wallSpacing = 30
 
 # sprites
 playerSprite = pygame.image.load("Intro\sprites\player.png").convert_alpha()
+playerSprite = pygame.transform.scale(playerSprite,(12, 11))
 proSprite = pygame.image.load("Intro\sprites\projectile.png").convert_alpha()
-projectileSprite = pygame.transform.scale(proSprite,(8, 8))
+projectileSprite = pygame.transform.scale(proSprite,(12, 16))
 wSprite = pygame.image.load("Intro\sprites\wall.png").convert_alpha()
 wallSprite = pygame.transform.scale(proSprite,(16, 16))
 wallWidth, wallHeight = wallSprite.get_size()
@@ -156,8 +157,13 @@ def VisualDebugger():
     if lastWall:
         pygame.draw.circle(surface, (255, 255, 0), (int(lastWall.GetPosition()[0]), int(lastWall.GetPosition()[1])), 5)
 
-    # Optional: draw wall spacing radius as a circle
+    # draw wall spacing radius as a circle
     pygame.draw.circle(surface, (255, 0, 255), (int(player_center[0]), int(player_center[1])), wallSpacing, 1)
+
+    # hitboxes
+    pygame.draw.rect(surface, (255, 0, 0), player.GetRect(), 1)
+    for projectile in projectiles:
+        pygame.draw.rect(surface, (0, 255, 0), projectile.GetRect(), 1)
 #endregion
 
 # set text boxes

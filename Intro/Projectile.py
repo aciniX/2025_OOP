@@ -18,11 +18,19 @@ class Projectile():
         self.__yPos -= math.sin(rad) * self.__speed
     
     def GetRect(self):
-        return pygame.Rect(self.__xPos, self.__yPos, self.__width, self.__height)
+        rotatedSprite = pygame.transform.rotate(self.__sprite, self.__angle)
+        rect = rotatedSprite.get_rect(center=self.GetCenter())
+        # Shrink the rect by 20% in width and height
+        #return rect.inflate(-rect.width * 0.2, -rect.height * 0.2)
+        return rect
     
+    def GetCenter(self):
+        width, height = self.__sprite.get_size()
+        return (self.__xPos + width / 2, self.__yPos + height / 2)
+     
     def DrawSprite(self):
         # Rotate the original image by the current angle
-        rotated_sprite = pygame.transform.rotate(self.__sprite, self.__angle - 90)
+        rotated_sprite = pygame.transform.rotate(self.__sprite, self.__angle -90)
         # Get the new rect and center it at the current position
         rect = rotated_sprite.get_rect(center=(self.__xPos, self.__yPos))
         # Draw the rotated image

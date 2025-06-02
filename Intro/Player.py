@@ -53,7 +53,10 @@ class Player():
         #self.__surface.blit(self.__sprite, (self.__xPos, self.__yPos),)
 
     def GetRect(self):
-        return pygame.Rect(self.__xPos, self.__yPos, self.__width, self.__height)
+        rotatedSprite = pygame.transform.rotate(self.__sprite, self.__angle)
+        rect = rotatedSprite.get_rect(center=self.GetCenter())
+        # Shrink the rect by 20% in width and height
+        return rect.inflate(-rect.width * 0.2, -rect.height * 0.2)
     
     def GetCenter(self):
         width, height = self.__sprite.get_size()
@@ -68,9 +71,10 @@ class Player():
         # Add to player’s center position
         # Subtract sin from Y to compensate for pygame’s inverted Y axis
         rad = math.radians(self.__angle)
-        xSpawn = self.__xPos + math.cos(rad) * self.__spawnDist
-        ySpawn = self.__yPos - math.sin(rad) * self.__spawnDist
-        return (xSpawn, ySpawn)
+        center = self.GetCenter()
+        x = center[0] + math.cos(rad) * self.__spawnDist
+        y = center[1] - math.sin(rad) * self.__spawnDist
+        return (x, y)
     
     def CalcWallSpawnPoint(self):
         rad = math.radians(self.__angle + 180)  # behind player
