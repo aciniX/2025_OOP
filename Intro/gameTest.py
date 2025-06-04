@@ -32,7 +32,7 @@ clock = pygame.time.Clock()
 cSpeed = 60  # limit the FPS
 
 # set fonts
-gameFont = pygame.font.Font("Intro\Resources\systemerror.ttf")
+gameFont = pygame.font.Font("Intro\Resources\systemerror.ttf", 24)
 
 wallSpacing = 30
 #endregion
@@ -99,7 +99,8 @@ def Draw():
         projectile.DrawSprite()
     
     # draw UI
-    surface.blit(txtScore, (10, 10))
+    txtScoreRect = txtScore.get_rect(center=(screenWidth/2, 10))
+    surface.blit(txtScore, txtScoreRect)
 
     VisualDebugger()
     
@@ -217,4 +218,4 @@ while running:
     CheckCollisions()
     pygame.display.update()  # update the display    
     clock.tick(cSpeed) # sets the FPS
-#endregion    
+#endregion
