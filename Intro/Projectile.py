@@ -1,43 +1,45 @@
-import pygame
-import math
+import Objects
+import math, pygame
 
-class Projectile():
+class Projectile(Objects.Objects):
     def __init__(self, surface, sprite, angle, sPoint):
-        self.__surface = surface
-        self.__sprite = sprite
-        self.__angle = angle
-        self.__xPos = float(sPoint[0])
-        self.__yPos = float(sPoint[1])
-        self.__speed = 10
+        super().__init__(surface, sprite, sPoint)
+        self.__angle = angle  # set projectile to the angle the player is at on spawn
+        self.__speed = 10  # projectile speed
 
     def Movement(self):
-        rad = math.radians(self.__angle)
-        self.__xPos += math.cos(rad) * self.__speed
-        self.__yPos -= math.sin(rad) * self.__speed
+        rad = math.radians(self.__angle)  # convert angle to radians
+        # calculate and set angular movement positions
+        x, y = super().GetPos()
+        x += math.cos(rad) * self.__speed
+        y -= math.sin(rad) * self.__speed
+        super().SetPos(x,y)
     
     def GetRect(self):
-        rotatedSprite = pygame.transform.rotate(self.__sprite, self.__angle - 90)
+        # return projectile hit box (rotated)
+        rotatedSprite = pygame.transform.rotate(super().GetSprite(), self.__angle - 90)
         rect = rotatedSprite.get_rect(center=self.GetCenter())
-        # Shrink the rect by 20% in width and height
-        #return rect.inflate(-rect.width * 0.2, -rect.height * 0.2)
         return rect
     
     def GetCenter(self):
-        # width, height = self.__sprite.get_size()
-        return (self.__xPos, self.__yPos)
+        return (super().GetPos())
      
     def DrawSprite(self):
         # Rotate the original image by the current angle
-        rotated_sprite = pygame.transform.rotate(self.__sprite, self.__angle -90)
+        rotated_sprite = pygame.transform.rotate(super().GetSprite(), self.__angle -90)
         # Get the new rect and center it at the current position
-        rect = rotated_sprite.get_rect(center=(self.__xPos, self.__yPos))
+        rect = rotated_sprite.get_rect(center=(super().GetPos()))
         # Draw the rotated image
-        self.__surface.blit(rotated_sprite, rect.topleft)
-        #self.__surface.blit(self.__sprite, (self.__xPos, self.__yPos),)
+        super().GetSurface().blit(rotated_sprite, rect.topleft)
+        #self.__surface.blit(super().GetSprite(), (self.__xPos, self.__yPos),)
 
         # visual debugging
-        pygame.draw.circle(self.__surface, (255, 255, 0), (int(self.__xPos), int(self.__yPos)), 5)
+        # pygame.draw.circle(self.__surface, (255, 255, 0), (int(self.__xPos), int(self.__yPos)), 5)
 
     def IsOffScreen(self, width, height):
-        #check if object is within screen bounds
-        return not (0 <= self.__xPos <= width and 0 <= self.__yPos <= height)
+        # check if object is within screen bounds
+        if super().GetPos() is not None:
+            x, y = super().GetPos()
+            return not (0 <= x <= width and 0 <= y <= height)
+        else:
+            return False

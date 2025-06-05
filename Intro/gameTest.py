@@ -14,7 +14,8 @@ print('Number of modules initialized successfully:', numpass)
 
 # resolution of the window
 screenWidth = 1280
-screenHeight = 720 
+screenHeight = 720
+resolution = (screenWidth, screenHeight)
 pygame.display.set_mode((screenWidth, screenHeight))
 
 # Initializing RGB Color
@@ -38,32 +39,47 @@ wallSpacing = 30
 #endregion
 
 # sprites
-playerSprite = pygame.image.load("Intro\sprites\player.png").convert_alpha()
-playerSprite = pygame.transform.scale(playerSprite,(12, 11))
-proSprite = pygame.image.load("Intro\sprites\projectile.png").convert_alpha()
-projectileSprite = pygame.transform.scale(proSprite,(12, 16))
-wSprite = pygame.image.load("Intro\sprites\wall.png").convert_alpha()
-wallSprite = pygame.transform.scale(proSprite,(16, 16))
+playerSprite = []
+playerSprite.append(pygame.image.load("Intro\sprites\pGreen.png"))
+playerSprite.append(pygame.image.load("Intro\sprites\pRed.png"))
+playerSprite[0] = pygame.transform.scale(playerSprite[0],(12, 11)).convert_alpha()
+playerSprite[1] = pygame.transform.scale(playerSprite[1],(12, 11)).convert_alpha()
+proSprite = pygame.image.load("Intro\sprites\projectile.png")
+projectileSprite = pygame.transform.scale(proSprite,(12, 16)).convert_alpha()
+wSprite = pygame.image.load("Intro\sprites\wall.png")
+wallSprite = pygame.transform.scale(proSprite,(16, 16)).convert_alpha()
 wallWidth, wallHeight = wallSprite.get_size()
 
-player = Player.Player(surface, playerSprite, screenWidth, screenHeight, wallSprite, wallSpacing)  # instantiate player object
+# instantiate players
+#player = Player.Player(surface, playerSprite, resolution, wallSprite, wallSpacing, 1)  # instantiate player object
 
+# object lists
+players = []
 walls = []  # wall list
 projectiles = []
 
+# score
 score = 0
+pScores = [0,0]
 lastScoreInc = pygame.time.get_ticks()
 
-lastWallPos = None
-lastWall = None
-lastSpawnPoint = None
+# walls
+lastWallPos = [None, None]
+lastWall = [None, None]
+lastSpawnPoint = [None, None]
 
-dead = False
+# player deaath states
+dead = [False, False]
 
 # creating a bool value which checks allows the game to run
 running = True
 
 #region subroutines
+def NewGame():
+    global players
+    for i in range(2):
+        players.append(Player.Player(surface, playerSprite[i], resolution, wallSprite, wallSpacing, i))
+
 def UpdateScore(s):
     global score
     score += s
@@ -75,7 +91,17 @@ def SetScore(s):
 def GetScore():
     return score
 
+def GetPScore(pNum):
+    return pScores[pNum]
+
+def SetPScore(pNum,s):
+    pScores[pNum] = s
+
+def UpdatePScore(pNum,s):
+    pScores[pNum] += s
+
 def GameScore():
+    # increment score each second
     global lastScoreInc
     now = pygame.time.get_ticks()
     if (now - lastScoreInc) >= 1000:
@@ -91,8 +117,9 @@ def Draw():
         # pygame.draw.rect(surface, (255, 255, 0), obstacle)  # Draw the obstacle (yellow)
         wall.DrawSprite()
 
-    # draw player    
-    player.DrawSprite()
+    # draw player
+    for player in players:    
+        player.DrawSprite()
 
     # draw projectiles
     for projectile in projectiles:
@@ -101,47 +128,89 @@ def Draw():
     # draw UI
     txtScoreRect = txtScore.get_rect(center=(screenWidth/2, 10))
     surface.blit(txtScore, txtScoreRect)
+    txtP1ScoreRect = txtP1Score.get_rect(center=(screenWidth/5,10))
+    surface.blit(txtP1Score, txtP1ScoreRect)
+    txtP2ScoreRect = txtP2Score.get_rect(center=(4*screenWidth/5,10))
+    surface.blit(txtP2Score, txtP2ScoreRect)
 
-    VisualDebugger()
+    # display hit boxes and object centers
+    # VisualDebugger()
     
 def CheckCollisions():
     global dead
+    
+    # if player hit player
+    if players[0].GetRect().colliderect(players[1].GetRect()):
+        GameOver(3)
+        
     # player --> walls -- trigger death
-    player_rect = player.GetRect()
-    if len(walls) > 0:
-        dead = False
-        for wall in walls:
-            if player_rect.colliderect(wall.GetRect()):
-                print('dead')
-                dead = True
+    for i in range(len(players)):
+        player_rect = players[i].GetRect()  # reference player hit box
+        if len(walls) > 0:
+            dead[i] = False
+            for wall in walls:
+                if player_rect.colliderect(wall.GetRect()):
+                    dead[i] = True
+                    GameOver(i)
+                    break
+        # player collide with projectile
+        if len(projectiles) > 0:
+            dead[i] = False
+            for projectile in projectiles:
+                if player_rect.colliderect(projectile.GetRect()):
+                    dead[i] = True
+                    GameOver(i)
+                    break
+        
+        
 
     # projectile --> wall
     for projectile in projectiles[:]:
-        pRect = projectile.GetRect()
+        pRect = projectile.GetRect()  # reference projectile hit box
         for wall in walls[:]:
             if pRect.colliderect(wall.GetRect()):
                 walls.remove(wall)
                 break
 
-def Shoot():
-    projectiles.append(Projectile.Projectile(surface, projectileSprite, player.GetAngle(), player.CalcSpawnPoint()))
+def GameOver(pNum):
+    # wipe out all objects
+    players.clear()
+    walls.clear()
+    projectiles.clear()
 
-def GenerateWall():
+    # update scores
+    if pNum <= 1:
+        if pNum == 0:
+            pNum = 1
+        else:
+            pNum = 0
+        UpdatePScore(pNum, GetScore())
+    SetScore(0)
+    Draw()
+
+    # instantiate players
+    NewGame()
+
+def Shoot(pNum):
+    projectiles.append(Projectile.Projectile(surface, projectileSprite, players[pNum].GetAngle(), players[pNum].CalcSpawnPoint()))
+
+def GenerateWall(pNum):
     # check distance from last wall spawned to the to wall spawn point on the player, if > distance then spawn wall
     global lastWall, lastSpawnPoint
 
-    spawn = player.CalcWallSpawnPoint()
+    spawn = players[pNum].CalcWallSpawnPoint()
 
-    if lastWall == None:
-        lastWall = Wall.Walls(surface, wallSprite, spawn, 1)
-        lastSpawnPoint = spawn
-        walls.append(lastWall)
-    elif GetDistance(spawn, lastSpawnPoint) >= wallSpacing/2:
-        lastWall = Wall.Walls(surface, wallSprite, spawn, 1)
-        lastSpawnPoint = spawn
-        walls.append(lastWall)
+    if lastWall[pNum] == None:  # if no walls exist
+        lastWall[pNum] = Wall.Walls(surface, wallSprite, spawn, pNum)
+        lastSpawnPoint[pNum] = spawn
+        walls.append(lastWall[pNum])
+    elif GetDistance(spawn, lastSpawnPoint[pNum]) >= wallSpacing/2:  # check if distance between last wall and wall spawn is large enough
+        lastWall[pNum] = Wall.Walls(surface, wallSprite, spawn, pNum)
+        lastSpawnPoint[pNum] = spawn
+        walls.append(lastWall[pNum])
 
 def GetDistance(a,b):
+    # calculate straight line distance between 2 points
     return math.hypot(a[0] - b[0], a[1] - b[1])
 
 def VisualDebugger():
@@ -181,8 +250,13 @@ def VisualDebugger():
         pygame.draw.rect(surface, (0, 255, 255), wall.GetRect(), 1)
 #endregion
 
+# instantiate players
+NewGame()
+
 # set text boxes
 txtScore = gameFont.render(f"Score: {GetScore()}", True, (255, 255, 255))
+txtP1Score = gameFont.render(f"Player 1: {GetPScore(0)}", True, (255, 255, 255))
+txtP2Score = gameFont.render(f"Player 2: {GetPScore(1)}", True, (255, 255, 255))
 
 #region gameloop
 # keep game running till running is true (run the game loop while true)
@@ -198,24 +272,42 @@ while running:
     # store all keys pressed
     keys = pygame.key.get_pressed()
     # handle player shooting
-    if keys[pygame.K_SPACE] and player.CanShoot():
-        player.UpdateLastShotTime()
-        Shoot()
+    if keys[pygame.K_SPACE] and players[0].CanShoot():
+        players[0].UpdateLastShotTime()
+        Shoot(0)
+    if keys[pygame.K_UP] and players[1].CanShoot():
+        players[1].UpdateLastShotTime()
+        Shoot(1)
 
     # call player movement to get new player position
-    player.Movement(keys, walls)
-    GenerateWall()
+    for i in range(len(players)):
+        players[i].Movement(keys)
+        # check if leave screen
+        if players[i].IsOffScreen(screenWidth,screenHeight):
+            GameOver(i)
+
+    # generate walls while players move
+    for i in range(len(players)):
+        GenerateWall(i)
+
+    # increment score / time
     GameScore()
     txtScore = gameFont.render(f"Score: {GetScore()}", True, (255, 255, 255))
+    txtP1Score = gameFont.render(f"Player 1: {GetPScore(0)}", True, (255, 255, 255))
+    txtP2Score = gameFont.render(f"Player 2: {GetPScore(1)}", True, (255, 255, 255))
 
     # remove projectiles that go off the screen
     for projectile in projectiles:
         projectile.Movement()
         if projectile.IsOffScreen(screenWidth, screenHeight):
             projectiles.remove(projectile)
-            
+
+    # render the game        
     Draw()
+
+    # check for any collisions
     CheckCollisions()
+
     pygame.display.update()  # update the display    
     clock.tick(cSpeed) # sets the FPS
 #endregion
