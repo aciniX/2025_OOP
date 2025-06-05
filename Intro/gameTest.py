@@ -273,7 +273,7 @@ while running:
     # store all keys pressed
     keys = pygame.key.get_pressed()
     # handle player shooting
-    if keys[pygame.K_SPACE] and players[0].CanShoot():
+    if keys[pygame.K_w] and players[0].CanShoot():
         players[0].UpdateLastShotTime()
         Shoot(0)
     if keys[pygame.K_UP] and players[1].CanShoot():
