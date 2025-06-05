@@ -1,6 +1,3 @@
-import pygame
-import math
-
 class Objects():
     def __init__(self, surface, sprite, sPoint):
         self.__surface = surface  # surface to draw on

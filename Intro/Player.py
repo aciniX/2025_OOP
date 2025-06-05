@@ -22,9 +22,7 @@ class Player(Objects.Objects):
         self.__wallWidth, self.__wallHeight = wallSprite.get_size()
         self.__pNum = pNum
                
-
     def Movement(self, keysPressed):      
-
         # set desired rotation
         if self.__pNum == 0:
             if keysPressed[pygame.K_a]:

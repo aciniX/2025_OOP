@@ -142,7 +142,7 @@ def CheckCollisions():
     # if player hit player
     if players[0].GetRect().colliderect(players[1].GetRect()):
         GameOver(3)
-        
+
     # player --> walls -- trigger death
     for i in range(len(players)):
         player_rect = players[i].GetRect()  # reference player hit box
@@ -217,30 +217,31 @@ def VisualDebugger():
     global dead
     # === Debug Lines & Markers ===
     global lastWall
-    player_center = player.GetCenter()
-    spawn_point = player.CalcWallSpawnPoint()
-    proj_spawn = player.CalcSpawnPoint()
+    for player in players:
+        player_center = player.GetCenter()
+        spawn_point = player.CalcWallSpawnPoint()
+        proj_spawn = player.CalcSpawnPoint()
     
-    # Draw line from center to spawn point (wall direction)
-    pygame.draw.line(surface, (255, 255, 0), player_center, spawn_point, 2)
+        # Draw line from center to spawn point (wall direction)
+        pygame.draw.line(surface, (255, 255, 0), player_center, spawn_point, 2)
 
-    # Draw circle at center of player (green)
-    if dead:
-        pygame.draw.circle(surface, (255, 0, 0), (int(player_center[0]), int(player_center[1])), 5)
-    else:
-        pygame.draw.circle(surface, (0, 255, 0), (int(player_center[0]), int(player_center[1])), 5)
+        # Draw circle at center of player (green)
+        if dead:
+            pygame.draw.circle(surface, (255, 0, 0), (int(player_center[0]), int(player_center[1])), 5)
+        else:
+            pygame.draw.circle(surface, (0, 255, 0), (int(player_center[0]), int(player_center[1])), 5)
 
-    # Draw circle at spawn point (blue)
-    pygame.draw.circle(surface, (0, 0, 255), (int(spawn_point[0]), int(spawn_point[1])), 5)
-    # Draw circle at spawn point
-    pygame.draw.circle(surface, (0, 255, 255), (int(proj_spawn[0]), int(proj_spawn[1])), 5)
+        # Draw circle at spawn point (blue)
+        pygame.draw.circle(surface, (0, 0, 255), (int(spawn_point[0]), int(spawn_point[1])), 5)
+        # Draw circle at spawn point
+        pygame.draw.circle(surface, (0, 255, 255), (int(proj_spawn[0]), int(proj_spawn[1])), 5)
+
+        # draw wall spacing radius as a circle
+        pygame.draw.circle(surface, (255, 0, 255), (int(player_center[0]), int(player_center[1])), wallSpacing, 1)
 
     # Draw circle at last wall origin/position (yellow)
     if lastWall:
         pygame.draw.circle(surface, (255, 255, 0), (int(lastWall.GetPosition()[0]), int(lastWall.GetPosition()[1])), 5)
-
-    # draw wall spacing radius as a circle
-    pygame.draw.circle(surface, (255, 0, 255), (int(player_center[0]), int(player_center[1])), wallSpacing, 1)
 
     # hitboxes
     pygame.draw.rect(surface, (255, 0, 0), player.GetRect(), 1)
